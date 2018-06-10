@@ -29,5 +29,5 @@ node_modules/
 .yo-rc.json
 
 # Build-related directories
-es5/
+#es5/
 test/dist/
