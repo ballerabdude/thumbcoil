@@ -372,9 +372,9 @@ const parsePesPackets = function(packets) {
         parseNals(event);
       }
 
-      if (event.type === 'audio') {
-        parseAac(event);
-      }
+      // if (event.type === 'audio') {
+      //   parseAac(event);
+      // }
 
       stream.size = 0;
       stream.tsPacketIndices = [];

@@ -171,103 +171,11 @@ const nalParse = function (nalUnit) {
   let newOptions;
 
   switch (nalUnitType) {
-    case 0x01:
-      nalObject = sliceLayerWithoutPartitioning.decode(nalData, lastOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      return nalObject;
-    case 0x02:
-      return {
-        type: 'slice_data_partition_a_layer_rbsp',
-        size: nalData.length
-      };
-      break;
-    case 0x03:
-      return {
-        type: 'slice_data_partition_b_layer_rbsp',
-        size: nalData.length
-      };
-    case 0x04:
-      return {
-        type: 'slice_data_partition_c_layer_rbsp',
-        size: nalData.length
-      };
-    case 0x05:
-      newOptions = mergePS(lastOptions, {idrPicFlag: 1});
-      nalObject = sliceLayerWithoutPartitioning.decode(nalData, newOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp_idr';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      return nalObject;
     case 0x06:
       nalObject = supplementalEnhancementInformation.decode(nalData, lastOptions);
       nalObject.type = 'sei_message_rbsp';
       nalObject.size = nalData.length;
       return nalObject;
-    case 0x07:
-      lastSPS = seqParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastSPS.type = 'seq_parameter_set_rbsp';
-      lastSPS.size = nalData.length;
-      return lastSPS;
-    case 0x08:
-      lastPPS = picParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastPPS.type = 'pic_parameter_set_rbsp';
-      lastPPS.size = nalData.length;
-      return lastPPS;
-    case 0x09:
-      nalObject = accessUnitDelimiter.decode(nalData);
-      nalObject.type = 'access_unit_delimiter_rbsp';
-      nalObject.size = nalData.length;
-      return nalObject;
-    case 0x0A:
-      return {
-        type: 'end_of_seq_rbsp',
-        size: nalData.length
-      };
-    case 0x0B:
-      return {
-        type: 'end_of_stream_rbsp',
-        size: nalData.length
-      };
-    case 0x0C:
-      return {
-        type: 'filler_data_rbsp',
-        size: nalData.length
-      };
-    case 0x0D:
-      return {
-        type: 'seq_parameter_set_extension_rbsp',
-        size: nalData.length
-      };
-    case 0x0E:
-      return {
-        type: 'prefix_nal_unit_rbsp',
-        size: nalData.length
-      };
-    case 0x0F:
-      return {
-        type: 'subset_seq_parameter_set_rbsp',
-        size: nalData.length
-      };
-    case 0x10:
-      return {
-        type: 'depth_parameter_set_rbsp',
-        size: nalData.length
-      };
-    case 0x13:
-      return {
-        type: 'slice_layer_without_partitioning_rbsp_aux',
-        size: nalData.length
-      };
-    case 0x14:
-    case 0x15:
-      return {
-        type: 'slice_layer_extension_rbsp',
-        size: nalData.length
-      };
     default:
       return {
         type: 'INVALID NAL-UNIT-TYPE - ' + nalUnitType,

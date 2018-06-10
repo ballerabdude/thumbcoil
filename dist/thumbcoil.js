@@ -1,4 +1,10 @@
-(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.thumbcoil = f()}})(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+/**
+ * thumbcoil
+ * @version 1.2.3-hackweek2
+ * @copyright 2018 Brightcove, Inc.
+ * @license Apache-2.0
+ */
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.thumbcoil = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -3264,103 +3270,11 @@ var nalParse = function nalParse(nalUnit) {
   var newOptions = undefined;
 
   switch (nalUnitType) {
-    case 0x01:
-      nalObject = _bitStreamsH264.sliceLayerWithoutPartitioning.decode(nalData, lastOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      return nalObject;
-    case 0x02:
-      return {
-        type: 'slice_data_partition_a_layer_rbsp',
-        size: nalData.length
-      };
-      break;
-    case 0x03:
-      return {
-        type: 'slice_data_partition_b_layer_rbsp',
-        size: nalData.length
-      };
-    case 0x04:
-      return {
-        type: 'slice_data_partition_c_layer_rbsp',
-        size: nalData.length
-      };
-    case 0x05:
-      newOptions = mergePS(lastOptions, { idrPicFlag: 1 });
-      nalObject = _bitStreamsH264.sliceLayerWithoutPartitioning.decode(nalData, newOptions);
-      nalObject.type = 'slice_layer_without_partitioning_rbsp_idr';
-      nalObject.nal_ref_idc = nalRefIdc;
-      nalObject.size = nalData.length;
-      return nalObject;
     case 0x06:
       nalObject = _bitStreamsH264.supplementalEnhancementInformation.decode(nalData, lastOptions);
       nalObject.type = 'sei_message_rbsp';
       nalObject.size = nalData.length;
       return nalObject;
-    case 0x07:
-      lastSPS = _bitStreamsH264.seqParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastSPS.type = 'seq_parameter_set_rbsp';
-      lastSPS.size = nalData.length;
-      return lastSPS;
-    case 0x08:
-      lastPPS = _bitStreamsH264.picParameterSet.decode(nalData);
-      lastOptions = mergePS(lastPPS, lastSPS);
-      lastPPS.type = 'pic_parameter_set_rbsp';
-      lastPPS.size = nalData.length;
-      return lastPPS;
-    case 0x09:
-      nalObject = _bitStreamsH264.accessUnitDelimiter.decode(nalData);
-      nalObject.type = 'access_unit_delimiter_rbsp';
-      nalObject.size = nalData.length;
-      return nalObject;
-    case 0x0A:
-      return {
-        type: 'end_of_seq_rbsp',
-        size: nalData.length
-      };
-    case 0x0B:
-      return {
-        type: 'end_of_stream_rbsp',
-        size: nalData.length
-      };
-    case 0x0C:
-      return {
-        type: 'filler_data_rbsp',
-        size: nalData.length
-      };
-    case 0x0D:
-      return {
-        type: 'seq_parameter_set_extension_rbsp',
-        size: nalData.length
-      };
-    case 0x0E:
-      return {
-        type: 'prefix_nal_unit_rbsp',
-        size: nalData.length
-      };
-    case 0x0F:
-      return {
-        type: 'subset_seq_parameter_set_rbsp',
-        size: nalData.length
-      };
-    case 0x10:
-      return {
-        type: 'depth_parameter_set_rbsp',
-        size: nalData.length
-      };
-    case 0x13:
-      return {
-        type: 'slice_layer_without_partitioning_rbsp_aux',
-        size: nalData.length
-      };
-    case 0x14:
-    case 0x15:
-      return {
-        type: 'slice_layer_extension_rbsp',
-        size: nalData.length
-      };
     default:
       return {
         type: 'INVALID NAL-UNIT-TYPE - ' + nalUnitType,
@@ -4747,9 +4661,27 @@ var parseTransportStreamPackets = function parseTransportStreamPackets(packets) 
   var parsePat = function parsePat(packet) {
     var pat = packet.content;
     var payload = pat.data;
+    var sectionLength = (payload[1] & 0x0F) << 8 | payload[2];
+    var tableBits = sectionLength * 8;
 
-    pat.sectionNumber = payload[7]; // eslint-disable-line camelcase
-    pat.lastSectionNumber = payload[8]; // eslint-disable-line camelcase
+    // subtract bits past section length before table
+    tableBits -= 40;
+    // subtract ending CRC_32 bits
+    tableBits -= 32;
+
+    pat.sectionNumber = payload[6]; // eslint-disable-line camelcase
+    pat.lastSectionNumber = payload[7]; // eslint-disable-line camelcase
+
+    pat.table = {};
+
+    // 4 bytes per section
+    for (var i = 0; i < tableBits / 8; i += 4) {
+      var byteIndex = i + 8;
+      var programNumber = payload[byteIndex] << 8 | payload[byteIndex + 1];
+      var pid = (payload[byteIndex + 2] & 31) << 8 | payload[byteIndex + 3];
+
+      pat.table[programNumber] = pid;
+    }
 
     // skip the PSI header and parse the first PMT entry
     pmtPid = (payload[10] & 0x1F) << 8 | payload[11];
@@ -4954,9 +4886,9 @@ var parsePesPackets = function parsePesPackets(packets) {
       parseNals(event);
     }
 
-    if (event.type === 'audio') {
-      parseAac(event);
-    }
+    // if (event.type === 'audio') {
+    //   parseAac(event);
+    // }
 
     stream.size = 0;
     stream.tsPacketIndices = [];
@@ -4975,6 +4907,7 @@ var parsePesPackets = function parsePesPackets(packets) {
         lastSectionNumber: pat.lastSectionNumber,
         tsPacketIndices: [packetIndex],
         pmtPid: pat.pmtPid,
+        table: pat.table,
         data: pat.data
       });
     },
@@ -6332,6 +6265,177 @@ exports.appendRBSPTrailingBits = appendRBSPTrailingBits;
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
+var isIFrame = function isIFrame(frame) {
+  if (!frame.nals) {
+    return false;
+  }
+
+  // nal_unit_type of 5 is a coded slice of an IDR (instantaneous decoding refresh)
+  // picture
+  if (frame.nals.find(function (nal) {
+    return nal.nal_unit_type === 5;
+  })) {
+    return true;
+  }
+
+  // slice_layer_without_partitioning_rbsp_idr is an IDR variant of
+  // slice_layer_without_partitioning_rbsp
+  if (frame.nals.find(function (nal) {
+    return nal.type === 'slice_layer_without_partitioning_rbsp_idr';
+  })) {
+    return true;
+  }
+
+  var seiMessage = frame.nals.find(function (nal) {
+    return nal.type === 'sei_message';
+  });
+
+  if (seiMessage && seiMessage.recovery_point && seiMessage.recovery_point.exact_match_flag === 1) {
+    return true;
+  }
+
+  return false;
+};
+
+var validateContainers = function validateContainers(esMap) {
+  var warnings = [];
+  var errors = [];
+
+  var iFrames = esMap.filter(function (esEl) {
+    return esEl.type === 'video';
+  }).filter(isIFrame);
+
+  if (iFrames.length === 0) {
+    warnings.push('Segment has no I-frames');
+  }
+
+  var firstVideoFrame = esMap.find(function (esEl) {
+    return esEl.type === 'video';
+  });
+
+  if (firstVideoFrame && !isIFrame(firstVideoFrame)) {
+    warnings.push('Segment does not start with an I-frame');
+  }
+
+  var unknownPackets = esMap.filter(function (esEl) {
+    return esEl.type.startsWith('unknown-');
+  });
+
+  if (unknownPackets.length > 0) {
+    warnings.push('Detected ' + unknownPackets.length + ' packets with unknown types');
+  }
+
+  var pid0Packets = esMap.filter(function (esEl) {
+    return esEl.pid === 0;
+  });
+  var invalidPid0Packets = pid0Packets.filter(function (esEl) {
+    return esEl.type !== 'pat';
+  });
+
+  if (invalidPid0Packets.length > 0) {
+    errors.push('Detected ' + invalidPid0Packets.length + ' packets with pid 0 and a non-PAT type');
+  }
+
+  var multiProgramPats = esMap.filter(function (esEl) {
+    return esEl.type === 'pat' && Object.keys(esEl.table).length > 1;
+  });
+
+  if (multiProgramPats.length > 0) {
+    errors.push('Detected ' + multiProgramPats.length + ' PAT packet(s) with more than one program');
+  }
+
+  // we only parse the first PMT PID from the PAT, so we can also check for extra programs
+  // by seeing if there are PMTs with different IDs
+  var pmtPackets = esMap.filter(function (esEl) {
+    return esEl.type === 'pmt';
+  });
+  var pmtPids = Array.from(new Set(pmtPackets.map(function (packet) {
+    return packet.pid;
+  })));
+
+  if (pmtPids.length > 1) {
+    errors.push('Detected ' + pmtPids.length + ' programs in the stream (more than allowed 1)');
+  }
+
+  var tracks = [];
+
+  // find tracks with unique IDs
+  pmtPackets.forEach(function (pmtPacket) {
+    pmtPacket.tracks.forEach(function (track) {
+      if (!tracks.find(function (seenTrack) {
+        return seenTrack.id === track.id;
+      })) {
+        tracks.push(track);
+      }
+    });
+  });
+
+  var audioTracks = tracks.filter(function (track) {
+    return track.type === 'audio';
+  });
+
+  if (audioTracks.length > 1) {
+    warnings.push('Detected ' + audioTracks.length + ' audio tracks (more than preferred 1)');
+  }
+
+  if (audioTracks.length >= 1) {
+    var audioCodecs = Array.from(new Set(audioTracks.map(function (audioTrack) {
+      return audioTrack.codec;
+    })));
+    var unsupportedAudioCodecs = audioCodecs.filter(function (audioCodec) {
+      return audioCodec !== 'adts';
+    });
+
+    if (unsupportedAudioCodecs.length > 0) {
+      warnings.push('Detected unsupported audio codec(s) ' + unsupportedAudioCodecs.join(', ') + ' ' + '(we only support AAC, determined by presence of ADTS)');
+    }
+  }
+
+  var videoTracks = tracks.filter(function (track) {
+    return track.type === 'video';
+  });
+
+  if (videoTracks.length === 0) {
+    warnings.push('No video track detected');
+  }
+
+  if (videoTracks.length > 1) {
+    warnings.push('Detected ' + videoTracks.length + ' video tracks (more than preferred 1)');
+  }
+
+  if (videoTracks.length >= 1) {
+    var videoCodecs = Array.from(new Set(videoTracks.map(function (videoTrack) {
+      return videoTrack.codec;
+    })));
+    var unsupportedVideoCodecs = videoCodecs.filter(function (videoCodec) {
+      return videoCodec !== 'avc';
+    });
+
+    if (unsupportedVideoCodecs.length > 0) {
+      warnings.push('Detected unsupported video codec(s) ' + unsupportedVideoCodecs.join(', ') + ' ' + '(we only support AVC)');
+    }
+  }
+
+  var unsupportedTracks = tracks.filter(function (track) {
+    return !['video', 'audio', 'metadata'].includes(track.type);
+  });
+
+  if (unsupportedTracks.length > 0) {
+    warnings.push('Detected unsupported track types');
+  }
+
+  return {
+    warnings: warnings,
+    errors: errors
+  };
+};
+exports.validateContainers = validateContainers;
+},{}],32:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -6341,17 +6445,20 @@ var _bitStreamsH2642 = _interopRequireDefault(_bitStreamsH264);
 
 var _inspectors = require('./inspectors');
 
+var _validatorsContainer = require('./validators/container');
+
 var thumbCoil = {
   h264Codecs: _bitStreamsH2642['default'],
   mp4Inspector: _inspectors.mp4Inspector,
   tsInspector: _inspectors.tsInspector,
-  flvInspector: _inspectors.flvInspector
+  flvInspector: _inspectors.flvInspector,
+  validateContainers: _validatorsContainer.validateContainers
 };
 
 // Include the version number.
-thumbCoil.VERSION = '1.2.3';
+thumbCoil.VERSION = '1.2.3-hackweek2';
 
 exports['default'] = thumbCoil;
 module.exports = exports['default'];
-},{"./bit-streams/h264":6,"./inspectors":18}]},{},[31])(31)
+},{"./bit-streams/h264":6,"./inspectors":18,"./validators/container":31}]},{},[32])(32)
 });
